@@ -2,28 +2,13 @@
 #include "debug.h"
 #include QMK_KEYBOARD_H
 
-//static bool ambreathing = false;
 static uint8_t caps_state = 0;
-
 static uint16_t top = 32;
 static uint8_t bottom = 1;
 static uint8_t delay = 32;
-
-//static uint16_t extend_dark = 0;
-//static uint16_t total_darkness = 40;
 static uint32_t ovf_interrupts;
 static uint32_t comp_interrupts;
 static uint8_t delay_cycles;
-
-/*
-static uint16_t breathing_counter = 0;
-static uint8_t breath_scale_counter = 1;
-const uint8_t   breathing_ISR_frequency     = 120;
-const uint16_t   breathing_period    = 6;
-static uint16_t breathing_freq_scale_factor = 2;
-#    define BREATHING_STEPS 128
-#    define BACKLIGHT_LEVELS 10
-*/
 
 #    define TOP 32
 
@@ -78,13 +63,9 @@ bool is_going_up(void) { return going_up; }
 
 
 static inline void enable_pwm(void) {
-    //TCCR0A |= _BV(COM0B1) | _BV(COM0B0);
-    //TCCR0A |= _BV(COM0A1) | _BV(COM0B1);
 }
 
 static inline void disable_pwm(void) {
-    //TCCR0A &= ~(_BV(COM0B1) | _BV(COM0B0));
-    //TCCR0A &= ~(_BV(COM0A1) | _BV(COM0B1));
     TCCR0A &= ~(_BV(WGM01) | _BV(WGM00));
 }
 
@@ -132,13 +113,6 @@ void breathing_toggle(void) {
         breathing_enable();
 }
 
-/* To generate breathing curve in python:
- * from math import sin, pi; [int(sin(x/128.0*pi)**4*255) for x in range(128)]
- */
-//static const uint8_t breathing_table[BREATHING_STEPS] PROGMEM = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 17, 20, 24, 28, 32, 36, 41, 46, 51, 57, 63, 70, 76, 83, 91, 98, 106, 113, 121, 129, 138, 146, 154, 162, 170, 178, 185, 193, 200, 207, 213, 220, 225, 231, 235, 240, 244, 247, 250, 252, 253, 254, 255, 254, 253, 252, 250, 247, 244, 240, 235, 231, 225, 220, 213, 207, 200, 193, 185, 178, 170, 162, 154, 146, 138, 129, 121, 113, 106, 98, 91, 83, 76, 70, 63, 57, 51, 46, 41, 36, 32, 28, 24, 20, 17, 15, 12, 10, 8, 6, 5, 4, 3, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-// Use this before the cie_lightness function.
-//static inline uint16_t scale_backlight(uint16_t v) { return v / BACKLIGHT_LEVELS * get_backlight_level(); }
 ISR(TIMER0_COMPB_vect)
 {
 
@@ -168,21 +142,21 @@ else if (is_breathing() && led_on && ovf_interrupts >= bottom){  // on 1 sec = 1
         }
 
    if (delay_cycles > delay){
-        if (!is_going_up()){  // going down
+        if (!is_going_up()){                                    // going down
            if (top >= 1){
                 top--;
                 }
-           else{            // top is 0 here, switching direction to up
+           else{                                                // top is 0 here, switching direction to up
                 top = 1;
                 going_up();
                 top++;
            }
         }
-        else{                   // going up
+        else{                                                 // going up
            if (top <= TOP){
                 top++;
                 }
-           else{                  // botom 0 here
+           else{                                              // botom 0 here
                 top = TOP;
                 bottom = 1;
                 going_down();
@@ -198,20 +172,8 @@ else if (is_breathing() && led_on && ovf_interrupts >= bottom){  // on 1 sec = 1
 ISR(TIMER0_OVF_vect)
 {
 #ifdef MYLEDTIMER
-//Timer overflow 
- 
-         //OCR0B += 100;
-        //OCR0A += 100;
-/*
-        comp_interrupts++;
-        if (comp_interrupts > 10000){
-                dprintf("10000 comp interrups \n");
-                comp_interrupts=0;
-        }
-*/
 #endif
 }
-
 
 
 void led_pwm_test(void){  
@@ -232,21 +194,14 @@ void led_pwm_test(void){
 	
 	*/
 
-	//breathing_interrupt_enable();
 	enable_pwm();
 
         /* reset all the timers and comparators */
-        //OCR0A = 0xFF;
-        OCR0B = 254;
-        TCNT0 = 0;
-	//TIMSK0 |= (1 << OCR0B);
+  OCR0B = 254;
+  TCNT0 = 0;
 	TIMSK0 |= (1 << OCIE0B);
 	TIMSK0 |= (1 << TOV0);
-	//TIFR0  |= (1 << OCF0B);
-	//TIMSK0 = 1 << TOIE0;
 	sei();			    // enable global interrupts - not necessary, works without it ok
-       // DDRB |= (1 << DDB7);        // B7 Pin
-
 #endif
 }
 
@@ -302,37 +257,7 @@ void dance_egg_vpn(tap_dance_state_t *state, void *user_data) {
 when false - it won't run. So if override is required implement logic in below method and return false */
 
 bool led_update_user(led_t led_state) {
-    //#ifdef AUDIO_ENABLE
-    //static uint8_t caps_state = 0;
-    //if (caps_state != led_state.caps_lock) {
-    //    led_state.caps_lock ? PLAY_SONG(caps_on) : PLAY_SONG(caps_off);
-    //    caps_state = led_state.caps_lock;
-    //}
-    //#endif
-
-/*
-    #ifdef BACKLIGHT_BREATHING
-        if (led_state.caps_lock == 1)
-                {
-                        breathing_enable();
-                }
-        else
-                {
-                        breathing_disable();
-                }
-    #endif
-*/
-//    #ifdef MY_CAPS_LOCK_PIN
-//           writePin(MY_CAPS_LOCK_PIN, led_state.caps_lock);
-//    #endif
-
-   //#ifdef LED_CAPS_LOCK_PIN
-   //     writePin(LED_CAPS_LOCK_PIN, led_state.caps_lock);
-   //#endif	
-
     if (caps_state != led_state.caps_lock) {
-	//backlight_level(10);
-        //led_state.caps_lock ? backlight_enable() : backlight_disable();
         led_state.caps_lock ? led_pwm_test() : breathing_disable();
         caps_state = led_state.caps_lock;
     }
@@ -343,7 +268,6 @@ bool led_update_user(led_t led_state) {
 // Tap Dance definitions
 tap_dance_action_t tap_dance_actions[] = {
     // Tap once for R SHIFT, twice for Sudo
-    //[TD_RSHIFT_SUDO] = ACTION_TAP_DANCE_FN(dance_egg_sudo)
     [TD_KC_PAUSE_SUDO] = ACTION_TAP_DANCE_FN(dance_egg_sudo),
     [TD_KC_SLCK_VPN] = ACTION_TAP_DANCE_FN(dance_egg_vpn)
 };
